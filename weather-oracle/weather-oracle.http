@@ -1,0 +1,6 @@
+@weather_oracle_HostAddress = http://localhost:5215
+
+GET {{weather_oracle_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
