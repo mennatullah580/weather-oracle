@@ -4,30 +4,25 @@ namespace weather_oracle.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+    public class LikelihoodController : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
+        [HttpGet]
+        public IActionResult Get([FromQuery] double lat, [FromQuery] double lon, [FromQuery] string month)
         {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
-
-        private readonly ILogger<WeatherForecastController> _logger;
-
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
-        {
-            _logger = logger;
-        }
-
-        [HttpGet(Name = "GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get()
-        {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            // Placeholder logic for now
+            var response = new
             {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
+                location = "Unknown",
+                month = month,
+                probabilities = new
+                {
+                    extreme_heat = 0.12,
+                    heavy_rain = 0.05
+                },
+                query = new { lat, lon }
+            };
+
+            return Ok(response);
         }
     }
 }
