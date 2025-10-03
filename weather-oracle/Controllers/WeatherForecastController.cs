@@ -1,62 +1,88 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
+using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
-using weather_oracle.Services;
+using WeatherOracle.Services;
 
-namespace weather_oracle.Controllers
+namespace WeatherOracle.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
-    public class LikelihoodController : ControllerBase
+    [Route("api")]
+    public class WeatherForecastController : ControllerBase
     {
-        private readonly PowerService _power;
+        private readonly ILogger<WeatherForecastController> _logger;
+        private readonly PowerService _powerService;
 
-        public LikelihoodController(PowerService power)
+        public WeatherForecastController(
+            ILogger<WeatherForecastController> logger,
+            PowerService powerService)
         {
-            _power = power;
+            _logger = logger;
+            _powerService = powerService;
         }
 
-        // Example:
-        // GET /Likelihood?lat=48.8&lon=2.3&month=7&param=T2M&threshold=30
-        [HttpGet]
-        public async Task<IActionResult> Get(
-            [FromQuery] double lat,
-            [FromQuery] double lon,
-            [FromQuery] int month,
-            [FromQuery] string param = "T2M",
-            [FromQuery] double threshold = 30.0,
-            [FromQuery] string startDate = "19810101",
-            [FromQuery] string endDate = "20101231")
+        [HttpGet("likelihood")]
+        public async Task<IActionResult> GetLikelihood(
+            [FromQuery] double? lat,
+            [FromQuery] double? lon,
+            [FromQuery] int month = 7,
+            [FromQuery] string heatParam = "T2M",
+            [FromQuery] double heatThresh = 35.0,
+            [FromQuery] string rainParam = "PRECTOTCORR",
+            [FromQuery] double rainThresh = 20.0)
         {
             try
             {
-                var powerJson = await _power.FetchPowerDailyAsync(lat, lon, startDate, endDate, parameters: param);
-                var prob = _power.ComputeProbExceedance(powerJson, param, month, threshold);
-
-                var probabilities = new
+                if (!lat.HasValue || !lon.HasValue)
                 {
-                    exceedance = prob.HasValue ? Math.Round(prob.Value, 4) : (double?)null
+                    return BadRequest(new { error = "lat and lon are required" });
+                }
+
+                _logger.LogInformation("Received request: lat={Lat}, lon={Lon}, month={Month}",
+                    lat.Value, lon.Value, month);
+
+                // Fetch from NASA POWER API
+                _logger.LogInformation("Fetching data from NASA POWER API (this may take 20-30 seconds)");
+                var powerData = await _powerService.FetchPowerDailyAsync(lat.Value, lon.Value);
+
+                var heatProb = _powerService.ComputeProbExceedance(
+                    powerData, heatParam, month, heatThresh);
+                var rainProb = _powerService.ComputeProbExceedance(
+                    powerData, rainParam, month, rainThresh);
+
+                var result = new
+                {
+                    location = $"{lat.Value},{lon.Value}",
+                    month = month,
+                    probabilities = new
+                    {
+                        heat_above_35C = heatProb.HasValue ? Math.Round(heatProb.Value, 3) : (double?)null,
+                        rain_above_20mm = rainProb.HasValue ? Math.Round(rainProb.Value, 3) : (double?)null
+                    }
                 };
 
-                var response = new
-                {
-                    location = "Unknown",
-                    month = month.ToString("D2"),
-                    param,
-                    threshold,
-                    probabilities,
-                    query = new { lat, lon, startDate, endDate }
-                };
-
-                return Ok(response);
+                return Ok(result);
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode(502, new { error = "Failed to reach POWER API", details = ex.Message });
+                _logger.LogError(ex, "NASA POWER API request failed");
+                return StatusCode(502, new
+                {
+                    error = "Bad Gateway",
+                    details = "NASA POWER API call failed",
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
-                return Problem(detail: ex.Message);
+                _logger.LogError(ex, "Unexpected error while processing request");
+                return StatusCode(500, new
+                {
+                    error = "Internal Server Error",
+                    details = ex.Message
+                });
             }
         }
     }
