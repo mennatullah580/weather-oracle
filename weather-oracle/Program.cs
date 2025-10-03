@@ -7,6 +7,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddHttpClient<weather_oracle.Services.PowerService>();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
