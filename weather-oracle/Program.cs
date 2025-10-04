@@ -1,5 +1,3 @@
-// Program.cs
-using weather_oracle.Services;
 using WeatherOracle.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,18 +10,24 @@ builder.Services.AddSwaggerGen();
 // Register PowerService with HttpClient
 builder.Services.AddHttpClient<PowerService>();
 
-// Add CORS for frontend
+// Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173") // Common frontend ports
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
 var app = builder.Build();
+
+// ??? CRITICAL: These 2 lines MUST come FIRST ???
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.UseCors("AllowAll");
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
@@ -32,7 +36,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

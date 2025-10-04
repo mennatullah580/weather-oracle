@@ -5,14 +5,6 @@ VisualStudioVersion = 17.12.35707.178 d17.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "weather-oracle", "weather-oracle\weather-oracle.csproj", "{B349B19A-28B2-47B1-B108-0AACEAA6C035}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Frontend", "Frontend", "{4139C511-F06B-4BF5-B1C7-C192E19983DA}"
-	ProjectSection(SolutionItems) = preProject
-		index.html = index.html
-		mock_data.json = mock_data.json
-		script.js = script.js
-		style.css = style.css
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Design", "Design", "{52068076-377C-41BB-85C7-6D833B1951E7}"
 	ProjectSection(SolutionItems) = preProject
 		logo.svg = logo.svg
