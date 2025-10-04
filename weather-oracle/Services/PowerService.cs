@@ -15,34 +15,44 @@ namespace WeatherOracle.Services
         public PowerService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
+            _httpClient.Timeout = TimeSpan.FromSeconds(3000);
         }
 
         public async Task<PowerResponse> FetchPowerDailyAsync(
-            double lat,
-            double lon,
-            string startDate = "19810101",
-            string endDate = "20101231",
-            string parameters = "T2M,PRECTOTCORR")
+    double lat,
+    double lon,
+    string startDate = "19810101",
+    string endDate = "20101231",
+    string parameters = "T2M,PRECTOTCORR")
         {
             var queryParams = new Dictionary<string, string>
-            {
-                { "parameters", parameters },
-                { "community", "AG" },
-                { "latitude", lat.ToString("F4") },
-                { "longitude", lon.ToString("F4") },
-                { "start", startDate },
-                { "end", endDate },
-                { "format", "JSON" }
-            };
+    {
+        { "parameters", parameters },
+        { "community", "AG" },
+        { "latitude", lat.ToString("F4") },
+        { "longitude", lon.ToString("F4") },
+        { "start", startDate },
+        { "end", endDate },
+        { "format", "JSON" }
+    };
 
             var queryString = string.Join("&", queryParams.Select(kvp =>
                 $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
 
             var url = $"{POWER_BASE}?{queryString}";
 
+            Console.WriteLine($"Calling NASA API: {url}");  // Debug log
+
             var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
+
+            Console.WriteLine($"NASA API Response Status: {response.StatusCode}");  // Debug log
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"NASA API Error: {errorContent}");  // Debug log
+                throw new HttpRequestException($"NASA API returned {response.StatusCode}: {errorContent}");
+            }
 
             var json = await response.Content.ReadAsStringAsync();
             var powerResponse = JsonSerializer.Deserialize<PowerResponse>(json, new JsonSerializerOptions
