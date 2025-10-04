@@ -528,7 +528,7 @@
 
             try {
                 // CHANGE THIS to your actual backend URL
-                const API_URL = `https://localhost:5001/api/likelihood?lat=${lat}&lon=${lon}&month=${month}`;
+                const API_URL = `http://localhost:7036/api/likelihood?lat=${lat}&lon=${lon}&month=${month}`;
 
                 const response = await fetch(API_URL);
                 const data = await response.json();

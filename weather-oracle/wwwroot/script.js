@@ -134,7 +134,7 @@
 // script.js - Frontend logic for Weather Oracle
 
 // IMPORTANT: Using HTTP instead of HTTPS to avoid mixed content issues
-const BACKEND_URL = 'https://localhost:7036';
+const BACKEND_URL = 'http://localhost:7036';
 
 // Create animated stars
 const starsContainer = document.getElementById('stars');
